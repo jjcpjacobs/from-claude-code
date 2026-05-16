@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eredivisie Goals — 2023/24</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:      #0a1628;
+      --surface: #0f1f3d;
+      --card:    #132444;
+      --border:  #1e3a6e;
+      --green:   #00a651;
+      --orange:  #ff6b00;
+      --red:     #e63946;
+      --yellow:  #ffd166;
+      --text:    #e8edf5;
+      --muted:   #7a90b0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 20px 56px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 2.1rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, var(--green) 0%, var(--yellow) 50%, var(--orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+
+    header small {
+      display: block;
+      color: var(--border);
+      font-size: 0.68rem;
+      margin-top: 4px;
+    }
+
+    /* ── Summary cards ── */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: 900px;
+      margin: 0 auto 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .stat-card .val {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--orange);
+      line-height: 1;
+    }
+
+    .stat-card .lbl {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .stat-card .sub {
+      font-size: 0.75rem;
+      color: var(--text);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      max-width: 900px;
+      margin: 0 auto 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── Content ── */
+    .content { max-width: 900px; margin: 0 auto; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--green);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    /* ── Scorers table ── */
+    .scorers-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .scorers-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 0.67rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scorers-table th.right { text-align: right; }
+
+    .scorers-table td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(30,58,110,0.45);
+      vertical-align: middle;
+    }
+
+    .scorers-table tr:last-child td { border-bottom: none; }
+
+    .rank {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      width: 28px;
+    }
+
+    .rank.gold   { color: #ffd700; }
+    .rank.silver { color: #c0c0c0; }
+    .rank.bronze { color: #cd7f32; }
+
+    .player-name { font-weight: 700; }
+
+    .club-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: var(--border);
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .goals-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .goals-bar-bg {
+      flex: 1;
+      height: 7px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .goals-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange), var(--yellow));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .goals-num {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--orange);
+      min-width: 26px;
+      text-align: right;
+    }
+
+    .assists-num {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: right;
+      min-width: 32px;
+    }
+
+    @media (max-width: 600px) {
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚽ Eredivisie Goals</h1>
+  <p>Seizoen 2023/24 &nbsp;·&nbsp; 18 clubs &nbsp;·&nbsp; 306 wedstrijden</p>
+  <small>Illustratieve data gebaseerd op het seizoen 2023/24</small>
+</header>
+
+<div class="summary">
+  <div class="stat-card">
+    <div class="val">887</div>
+    <div class="lbl">Totaal goals</div>
+    <div class="sub">heel het seizoen</div>
+  </div>
+  <div class="stat-card">
+    <div class="val">2.9</div>
+    <div class="lbl">Gem. per duel</div>
+    <div class="sub">306 wedstrijden</div>
+  </div>
+  <div class="stat-card">
+    <div class="val">29</div>
+    <div class="lbl">Topscorer</div>
+    <div class="sub">V. Pavlidis (AZ)</div>
+  </div>
+  <div class="stat-card">
+    <div class="val">96</div>
+    <div class="lbl">Beste aanval</div>
+    <div class="sub">PSV Eindhoven</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="clubs">Clubs</button>
+  <button class="tab-btn" data-tab="rounds">Speelronden</button>
+  <button class="tab-btn" data-tab="scorers">Topscorers</button>
+</div>
+
+<div class="content">
+
+  <!-- Tab: Clubs -->
+  <div class="panel active" id="panel-clubs">
+    <div class="chart-card">
+      <div class="chart-title">Goals gescoord &amp; tegengegeven — alle 18 clubs</div>
+      <canvas id="clubChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Tab: Speelronden -->
+  <div class="panel" id="panel-rounds">
+    <div class="chart-card">
+      <div class="chart-title">Cumulatieve goals per speelronde — top 5 clubs</div>
+      <canvas id="roundChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Goals per speelronde — heel de Eredivisie</div>
+      <canvas id="totalRoundChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Tab: Topscorers -->
+  <div class="panel" id="panel-scorers">
+    <div class="chart-card">
+      <div class="chart-title">Top 15 topscorers</div>
+      <table class="scorers-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Speler</th>
+            <th class="right">Goals</th>
+            <th class="right">Assists</th>
+          </tr>
+        </thead>
+        <tbody id="scorers-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Data ─────────────────────────────────────────────── */
+
+// total scored = total conceded = 887
+const TEAMS = [
+  { name: 'PSV',              scored: 96, conceded: 27 },
+  { name: 'Feyenoord',        scored: 82, conceded: 38 },
+  { name: 'AZ',               scored: 68, conceded: 35 },
+  { name: 'FC Twente',        scored: 61, conceded: 38 },
+  { name: 'FC Utrecht',       scored: 56, conceded: 44 },
+  { name: 'Ajax',             scored: 53, conceded: 47 },
+  { name: 'Go Ahead Eagles',  scored: 50, conceded: 49 },
+  { name: 'NEC',              scored: 47, conceded: 43 },
+  { name: 'Heracles',         scored: 45, conceded: 52 },
+  { name: 'Heerenveen',       scored: 44, conceded: 51 },
+  { name: 'Sparta Rotterdam', scored: 43, conceded: 49 },
+  { name: 'Almere City',      scored: 40, conceded: 57 },
+  { name: 'Fortuna Sittard',  scored: 38, conceded: 56 },
+  { name: 'RKC Waalwijk',     scored: 37, conceded: 54 },
+  { name: 'Excelsior',        scored: 34, conceded: 63 },
+  { name: 'FC Volendam',      scored: 32, conceded: 64 },
+  { name: 'Vitesse',          scored: 31, conceded: 61 },
+  { name: 'PEC Zwolle',       scored: 30, conceded: 59 },
+];
+
+const SCORERS = [
+  { name: 'V. Pavlidis',      club: 'AZ',               goals: 29, assists: 7  },
+  { name: 'L. de Jong',       club: 'PSV',              goals: 23, assists: 8  },
+  { name: 'N. Lang',          club: 'PSV',              goals: 18, assists: 11 },
+  { name: 'B. Brobbey',       club: 'Ajax',             goals: 17, assists: 5  },
+  { name: 'S. Giménez',       club: 'Feyenoord',        goals: 16, assists: 3  },
+  { name: 'S. Steijn',        club: 'FC Twente',        goals: 15, assists: 10 },
+  { name: 'I. Boadu',         club: 'AZ',               goals: 13, assists: 4  },
+  { name: 'M. Til',           club: 'Feyenoord',        goals: 12, assists: 6  },
+  { name: 'J. Timber',        club: 'FC Utrecht',       goals: 11, assists: 5  },
+  { name: 'A. Weghorst',      club: 'PSV',              goals: 11, assists: 4  },
+  { name: 'D. Hancko',        club: 'Feyenoord',        goals: 10, assists: 5  },
+  { name: 'O. Tannane',       club: 'Heracles',         goals: 10, assists: 6  },
+  { name: 'R. Ihattaren',     club: 'Go Ahead Eagles',  goals:  9, assists: 7  },
+  { name: 'C. van Hooijdonk', club: 'NEC',              goals:  9, assists: 3  },
+  { name: 'B. Linssen',       club: 'Feyenoord',        goals:  8, assists: 5  },
+];
+
+/* ── Seeded RNG (consistent across page loads) ───────── */
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = Math.imul(s ^ (s >>> 15), s | 1);
+    s ^= s + Math.imul(s ^ (s >>> 7), s | 61);
+    return ((s ^ (s >>> 14)) >>> 0) / 0x100000000;
+  };
+}
+
+/* ── Generate per-round data ─────────────────────────── */
+function buildRoundSeries(team, rng) {
+  const rounds = 34;
+  const avg = team.scored / rounds;
+  const values = [];
+  let cum = 0;
+
+  for (let r = 0; r < rounds; r++) {
+    const g = Math.max(0, Math.round(avg + (rng() - 0.45) * 2.8));
+    cum += g;
+    values.push(cum);
+  }
+
+  // snap last value to exact total
+  values[rounds - 1] += team.scored - values[rounds - 1];
+  return values;
+}
+
+function buildLeagueTotalsPerRound(teams, rng) {
+  const rounds = 34;
+  // sum goals for all teams per round
+  const allSeries = teams.map(t => {
+    const rng2 = makeRng(rng() * 0xffffffff);
+    return buildRoundSeries(t, rng2);
+  });
+  return Array.from({ length: rounds }, (_, r) =>
+    allSeries.reduce((sum, s) => sum + (r === 0 ? s[0] : s[r] - s[r - 1]), 0)
+  );
+}
+
+const rng = makeRng(0xdeadbeef);
+const TOP5 = TEAMS.slice(0, 5);
+const ROUND_LABELS = Array.from({ length: 34 }, (_, i) => `S${i + 1}`);
+
+const cumulSeries = TOP5.map(t => buildRoundSeries(t, makeRng(rng() * 0xffffffff)));
+const leagueTotals = buildLeagueTotalsPerRound(TEAMS, makeRng(rng() * 0xffffffff));
+
+/* ── Chart.js global defaults ────────────────────────── */
+Chart.defaults.color = '#7a90b0';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+/* ── Chart: Clubs ─────────────────────────────────────── */
+function buildClubChart() {
+  const ctx = document.getElementById('clubChart').getContext('2d');
+  const labels   = TEAMS.map(t => t.name);
+  const scored   = TEAMS.map(t => t.scored);
+  const conceded = TEAMS.map(t => t.conceded);
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Gescoord',
+          data: scored,
+          backgroundColor: 'rgba(0,166,81,0.82)',
+          borderColor: '#00a651',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Tegengegeven',
+          data: conceded,
+          backgroundColor: 'rgba(255,107,0,0.65)',
+          borderColor: '#ff6b00',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              const t = TEAMS[i];
+              return [`Doelsaldo: ${t.scored - t.conceded > 0 ? '+' : ''}${t.scored - t.conceded}`];
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,58,110,0.4)' },
+          ticks: { color: '#7a90b0' },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#e8edf5', font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+/* ── Chart: Cumulative top 5 ─────────────────────────── */
+function buildRoundChart() {
+  const ctx = document.getElementById('roundChart').getContext('2d');
+  const COLORS = ['#00a651', '#ff6b00', '#4a90d9', '#ffd166', '#e63946'];
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ROUND_LABELS,
+      datasets: TOP5.map((t, i) => ({
+        label: t.name,
+        data: cumulSeries[i],
+        borderColor: COLORS[i],
+        backgroundColor: COLORS[i] + '18',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.35,
+        fill: false,
+      })),
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: c => ` ${c.dataset.label}: ${c.parsed.y} goals`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,58,110,0.4)' },
+          ticks: { color: '#7a90b0', maxTicksLimit: 17 },
+        },
+        y: {
+          grid: { color: 'rgba(30,58,110,0.4)' },
+          ticks: { color: '#7a90b0' },
+          title: { display: true, text: 'Cumulatieve goals', color: '#7a90b0' },
+        },
+      },
+    },
+  });
+}
+
+/* ── Chart: League totals per round ──────────────────── */
+function buildTotalRoundChart() {
+  const ctx = document.getElementById('totalRoundChart').getContext('2d');
+
+  const avgLine = Array(34).fill(
+    Math.round(leagueTotals.reduce((a, b) => a + b, 0) / 34 * 10) / 10
+  );
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ROUND_LABELS,
+      datasets: [
+        {
+          label: 'Goals die speelronde',
+          data: leagueTotals,
+          backgroundColor: 'rgba(0,166,81,0.6)',
+          borderColor: '#00a651',
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+        {
+          label: 'Seizoensgemiddelde',
+          data: avgLine,
+          type: 'line',
+          borderColor: '#ff6b00',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: c => ` ${c.dataset.label}: ${c.parsed.y} goals`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,58,110,0.4)' },
+          ticks: { color: '#7a90b0', maxTicksLimit: 17 },
+        },
+        y: {
+          grid: { color: 'rgba(30,58,110,0.4)' },
+          ticks: { color: '#7a90b0' },
+        },
+      },
+    },
+  });
+}
+
+/* ── Scorers table ────────────────────────────────────── */
+function buildScorers() {
+  const tbody = document.getElementById('scorers-body');
+  const maxGoals = SCORERS[0].goals;
+
+  tbody.innerHTML = SCORERS.map((p, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    return `
+      <tr>
+        <td class="rank ${rankClass}">${i + 1}</td>
+        <td>
+          <div class="player-name">${p.name}</div>
+          <span class="club-tag">${p.club}</span>
+        </td>
+        <td>
+          <div class="goals-bar">
+            <div class="goals-bar-bg">
+              <div class="goals-bar-fill" style="width:${(p.goals / maxGoals * 100).toFixed(1)}%"></div>
+            </div>
+            <span class="goals-num">${p.goals}</span>
+          </div>
+        </td>
+        <td class="assists-num">${p.assists} ast</td>
+      </tr>`;
+  }).join('');
+}
+
+/* ── Tabs ─────────────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+  });
+});
+
+/* ── Init ─────────────────────────────────────────────── */
+buildClubChart();
+buildRoundChart();
+buildTotalRoundChart();
+buildScorers();
+</script>
+
+</body>
+</html>
