@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Wars Trivia</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+    :root {
+      --bg: #000005;
+      --surface: #0a0a1a;
+      --surface2: #0f0f2a;
+      --gold: #ffe81f;
+      --gold-dim: #b8a800;
+      --blue: #00bfff;
+      --red: #ff3333;
+      --green: #39ff14;
+      --text: #d0d0e8;
+      --muted: #6677aa;
+      --correct: #1a3d1a;
+      --wrong: #3d1a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Starfield */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--max-op, 0.8); transform: scale(1); }
+      50% { opacity: 0.1; transform: scale(0.5); }
+    }
+
+    /* Layout */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 20px 20px 60px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(255,232,31,0.6), 0 0 60px rgba(255,232,31,0.3);
+      letter-spacing: 4px;
+      line-height: 1.2;
+    }
+
+    .logo span { color: #fff; }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 3px;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--gold); }
+
+    /* Screen management */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Start screen */
+    #startScreen {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .crawl-box {
+      background: linear-gradient(to bottom, transparent, var(--surface) 20%, var(--surface) 80%, transparent);
+      border: 1px solid var(--gold-dim);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin: 24px 0;
+      text-align: left;
+      line-height: 1.8;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .crawl-box p { margin-bottom: 10px; }
+    .crawl-box p:last-child { margin: 0; }
+
+    .difficulty-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .difficulty-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .diff-btn {
+      padding: 9px 22px;
+      border-radius: 24px;
+      border: 2px solid var(--muted);
+      background: transparent;
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .diff-btn:hover,
+    .diff-btn.selected {
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 14px rgba(255,232,31,0.3);
+    }
+
+    .start-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      padding: 16px 48px;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+    }
+
+    .start-btn:hover {
+      background: #fff9a0;
+      box-shadow: 0 0 30px rgba(255,232,31,0.6);
+      transform: scale(1.04);
+    }
+
+    /* Quiz screen */
+    #quizScreen { padding: 10px 0; }
+
+    .quiz-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    .q-counter {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      color: var(--gold);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .score-display {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      color: var(--blue);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    /* Timer */
+    .timer-wrap {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .timer-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s linear, background 1s linear;
+    }
+
+    /* Progress dots */
+    .progress-dots {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--muted);
+      transition: all 0.3s;
+    }
+
+    .dot.done-correct { background: var(--green); border-color: var(--green); box-shadow: 0 0 6px var(--green); }
+    .dot.done-wrong   { background: var(--red);   border-color: var(--red);   box-shadow: 0 0 6px var(--red); }
+    .dot.current      { border-color: var(--gold); box-shadow: 0 0 8px var(--gold); transform: scale(1.3); }
+
+    /* Question card */
+    .question-card {
+      background: var(--surface);
+      border: 1px solid #1e2050;
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      margin-bottom: 20px;
+      animation: slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(22px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      background: rgba(255,232,31,0.1);
+      color: var(--gold);
+      border: 1px solid rgba(255,232,31,0.3);
+    }
+
+    .question-text {
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 600;
+      line-height: 1.55;
+      color: #fff;
+    }
+
+    /* Answers */
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 520px) { .answers { grid-template-columns: 1fr; } }
+
+    .answer-btn {
+      background: var(--surface2);
+      border: 2px solid #1e2050;
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.35;
+    }
+
+    .answer-btn .letter {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #1e2050;
+      border: 1px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      color: var(--muted);
+      transition: all 0.18s;
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(255,232,31,0.06);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(255,232,31,0.15);
+    }
+
+    .answer-btn:hover:not(:disabled) .letter {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #000;
+    }
+
+    .answer-btn.correct {
+      border-color: var(--green);
+      background: var(--correct);
+      color: var(--green);
+      box-shadow: 0 0 16px rgba(57,255,20,0.25);
+    }
+
+    .answer-btn.correct .letter {
+      background: var(--green);
+      border-color: var(--green);
+      color: #000;
+    }
+
+    .answer-btn.wrong {
+      border-color: var(--red);
+      background: var(--wrong);
+      color: var(--red);
+    }
+
+    .answer-btn.wrong .letter {
+      background: var(--red);
+      border-color: var(--red);
+      color: #000;
+    }
+
+    .answer-btn:disabled { cursor: default; }
+
+    /* Feedback */
+    .feedback {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      animation: fadeIn 0.25s ease;
+      display: none;
+    }
+
+    .feedback.show { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .feedback.correct-fb {
+      background: var(--correct);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+
+    .feedback.wrong-fb {
+      background: var(--wrong);
+      border: 1px solid var(--red);
+      color: #ff9999;
+    }
+
+    .next-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: none;
+    }
+
+    .next-btn.show { display: block; }
+
+    .next-btn:hover {
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 0 20px rgba(255,232,31,0.4);
+    }
+
+    /* Results screen */
+    #resultsScreen {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .results-card {
+      background: var(--surface);
+      border: 1px solid #1e2050;
+      border-radius: 20px;
+      padding: 36px 28px;
+      margin: 20px 0;
+    }
+
+    .rank-icon {
+      font-size: 4rem;
+      margin-bottom: 10px;
+      animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .rank-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .rank-sub {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 24px;
+    }
+
+    .score-big {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(255,232,31,0.5);
+      line-height: 1;
+    }
+
+    .score-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin: 24px 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-item { text-align: center; }
+
+    .stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .stat-num.green { color: var(--green); }
+    .stat-num.red   { color: var(--red); }
+    .stat-num.blue  { color: var(--blue); }
+
+    .stat-lbl {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .answers-review {
+      text-align: left;
+      margin-top: 20px;
+    }
+
+    .review-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .review-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .review-item.r-correct { border-left-color: var(--green); }
+    .review-item.r-wrong   { border-left-color: var(--red); }
+
+    .review-q { color: var(--text); margin-bottom: 4px; font-weight: 600; }
+    .review-a { color: var(--muted); font-size: 0.78rem; }
+    .review-a .ok  { color: var(--green); }
+    .review-a .bad { color: var(--red); text-decoration: line-through; }
+
+    .result-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .result-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      padding: 12px 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .result-btn.primary {
+      background: var(--gold);
+      color: #000;
+      border: none;
+      font-weight: 700;
+    }
+
+    .result-btn.primary:hover {
+      background: #fff9a0;
+      box-shadow: 0 0 20px rgba(255,232,31,0.5);
+    }
+
+    .result-btn.secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 2px solid var(--muted);
+    }
+
+    .result-btn.secondary:hover { border-color: var(--text); color: var(--text); }
+
+    /* Lightsaber divider */
+    .saber-divider {
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--blue), var(--gold), var(--blue), transparent);
+      border-radius: 1px;
+      margin: 24px 0;
+      box-shadow: 0 0 8px rgba(0,191,255,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+
+  <header>
+    <div class="logo"><span>STAR WARS</span><br>TRIVIA</div>
+    <div class="subtitle">May the Force be with you</div>
+    <a class="back-link" href="index.html">← Terug naar Pokédex</a>
+  </header>
+
+  <!-- ═══ START SCREEN ═══ -->
+  <div class="screen active" id="startScreen">
+    <div class="crawl-box">
+      <p>Lang lang geleden, in een sterrenstelsel ver, ver weg...</p>
+      <p>Test jouw kennis over het epische <strong style="color:var(--gold)">Star Wars universum</strong>. Van de Galactische Republiek tot het Eerste Orde, van Jedi-ridders tot Sith-lords – hoe goed ken jij de saga?</p>
+      <p>Kies je moeilijkheidsgraad en bewijs dat je de Force beheerst.</p>
+    </div>
+
+    <div class="difficulty-label">Kies moeilijkheidsgraad</div>
+    <div class="difficulty-btns">
+      <button class="diff-btn selected" data-diff="easy">Padawan</button>
+      <button class="diff-btn" data-diff="medium">Jedi Knight</button>
+      <button class="diff-btn" data-diff="hard">Jedi Master</button>
+    </div>
+
+    <button class="start-btn" id="startBtn">BEGIN DE TRIVIA</button>
+  </div>
+
+  <!-- ═══ QUIZ SCREEN ═══ -->
+  <div class="screen" id="quizScreen">
+    <div class="quiz-header">
+      <div class="q-counter" id="qCounter">Vraag 1 / 10</div>
+      <div class="timer-wrap">
+        <div class="timer-bar" id="timerBar"></div>
+      </div>
+      <div class="score-display" id="scoreDisplay">Score: 0</div>
+    </div>
+
+    <div class="progress-dots" id="progressDots"></div>
+
+    <div class="question-card" id="questionCard">
+      <div class="category-tag" id="categoryTag">Categorie</div>
+      <div class="question-text" id="questionText"></div>
+    </div>
+
+    <div class="answers" id="answersGrid"></div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">VOLGENDE VRAAG →</button>
+  </div>
+
+  <!-- ═══ RESULTS SCREEN ═══ -->
+  <div class="screen" id="resultsScreen">
+    <div class="results-card">
+      <div class="rank-icon" id="rankIcon"></div>
+      <div class="rank-title" id="rankTitle"></div>
+      <div class="rank-sub" id="rankSub"></div>
+      <div class="saber-divider"></div>
+      <div class="score-big" id="scoreBig"></div>
+      <div class="score-label">Punten</div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num green" id="statCorrect">0</div>
+          <div class="stat-lbl">Goed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num red" id="statWrong">0</div>
+          <div class="stat-lbl">Fout</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num blue" id="statTime">0s</div>
+          <div class="stat-lbl">Gem. Tijd</div>
+        </div>
+      </div>
+      <div class="saber-divider"></div>
+      <div class="answers-review" id="answersReview"></div>
+    </div>
+    <div class="result-btns">
+      <button class="result-btn primary" id="retryBtn">OPNIEUW SPELEN</button>
+      <button class="result-btn secondary" id="menuBtn">HOOFDMENU</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Starfield ── */
+(function() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 180; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      --dur:${(Math.random()*4+2).toFixed(1)}s;
+      --delay:-${(Math.random()*6).toFixed(1)}s;
+      --max-op:${(Math.random()*0.6+0.2).toFixed(2)};
+    `;
+    container.appendChild(s);
+  }
+})();
+
+/* ── Question Bank ── */
+const QUESTIONS = {
+  easy: [
+    {
+      q: "Wat is de naam van Luke Skywalkers vader?",
+      opts: ["Han Solo", "Darth Vader", "Obi-Wan Kenobi", "Palpatine"],
+      answer: 1,
+      cat: "Personages",
+      explain: "Darth Vader, eerder bekend als Anakin Skywalker, is de vader van Luke en Leia."
+    },
+    {
+      q: "Welke kleur heeft het lightsaber van Darth Vader?",
+      opts: ["Blauw", "Groen", "Rood", "Paars"],
+      answer: 2,
+      cat: "Wapens",
+      explain: "Sith-lords gebruiken rode lightsabers, gemaakt met een 'bleeding' kyber crystal."
+    },
+    {
+      q: "Op welke planeet is Luke Skywalker opgegroeid?",
+      opts: ["Naboo", "Coruscant", "Tatooine", "Hoth"],
+      answer: 2,
+      cat: "Planeten",
+      explain: "Luke groeide op bij zijn oom Owen en tante Beru op de woestijnplaneet Tatooine."
+    },
+    {
+      q: "Wat is de naam van Han Solo's ruimteschip?",
+      opts: ["X-Wing", "TIE Fighter", "Millennium Falcon", "Star Destroyer"],
+      answer: 2,
+      cat: "Ruimteschepen",
+      explain: "De Millennium Falcon deed de Kessel Run in minder dan 12 parsec."
+    },
+    {
+      q: "Wie is de kleine groene Jedi-meester die Luke traint?",
+      opts: ["Yoda", "Qui-Gon Jinn", "Mace Windu", "Yaddle"],
+      answer: 0,
+      cat: "Personages",
+      explain: "Meester Yoda, 900 jaar oud en de wijste Jedi, trainde Luke op Dagobah."
+    },
+    {
+      q: "Welke robot begeleidt Luke en zijn vrienden door het hele verhaal?",
+      opts: ["BB-8", "R4-P17", "R2-D2", "C1-10P"],
+      answer: 2,
+      cat: "Droids",
+      explain: "R2-D2 en C-3PO zijn de bekendste robots in de saga en verschijnen in alle films."
+    },
+    {
+      q: "Wat zegt Vader beroemd tegen Luke in 'The Empire Strikes Back'?",
+      opts: [
+        "Luke, jij bent mijn zoon.",
+        "Ik ben jouw vader.",
+        "De duistere kant is sterker.",
+        "Doe mee aan de duistere kant."
+      ],
+      answer: 1,
+      cat: "Citaten",
+      explain: "\"No, I am your father.\" – een van de beroemdste filmtwists ooit."
+    },
+    {
+      q: "Welke organisatie beschermt de vrede in de Republiek?",
+      opts: ["De Sith Orde", "De Jedi Orde", "De Nacht Zusters", "De Mandalorianen"],
+      answer: 1,
+      cat: "Organisaties",
+      explain: "De Jedi Orde bewaakt de vrede en gerechtigheid in de Galactische Republiek."
+    },
+    {
+      q: "Hoe heet de wookie die bevriend is met Han Solo?",
+      opts: ["Wicket", "Chewbacca", "Tarfful", "Zaalbar"],
+      answer: 1,
+      cat: "Personages",
+      explain: "Chewbacca, of 'Chewie', is Han Solo's co-piloot en trouwe vriend."
+    },
+    {
+      q: "In welk sterrenstelsel spelen de Star Wars films zich af?",
+      opts: ["Ons melkwegstelsel", "Andromeda", "Een ver, ver weg gelegen stelsel", "Triangulum"],
+      answer: 2,
+      cat: "Wereld",
+      explain: "\"A long time ago in a galaxy far, far away...\" – elk Star Wars verhaal begint zo."
+    },
+    {
+      q: "Welke kracht kunnen Jedi en Sith gebruiken?",
+      opts: ["Magie", "The Force", "Plasma energie", "Quantum kracht"],
+      answer: 1,
+      cat: "De Force",
+      explain: "The Force is een mysterieuze energie die Jedi en Sith een speciale verbinding mee hebben."
+    },
+    {
+      q: "Wie is de aanvoerder van de Stormtroopers in het originele verhaal?",
+      opts: ["Darth Maul", "Count Dooku", "Darth Vader", "General Grievous"],
+      answer: 2,
+      cat: "Personages",
+      explain: "Darth Vader leidde de Keizerlijke troepen in dienst van Emperor Palpatine."
+    },
+  ],
+  medium: [
+    {
+      q: "Wat is de geboorteplaneet van Darth Vader (Anakin Skywalker)?",
+      opts: ["Coruscant", "Tatooine", "Naboo", "Mustafar"],
+      answer: 1,
+      cat: "Planeten",
+      explain: "Anakin Skywalker werd geboren als slaaf op Tatooine."
+    },
+    {
+      q: "Hoe heet de Sith-filosofie die alleen een meester en een leerling toestaat?",
+      opts: ["De Code van Bane", "De Regel van Twee", "De Sith Orde", "De Duistere Pact"],
+      answer: 1,
+      cat: "Sith",
+      explain: "Darth Bane stelde de Regel van Twee in: altijd twee Sith, nooit meer, nooit minder."
+    },
+    {
+      q: "Op welke planeet wordt de tweede Death Star gebouwd in 'Return of the Jedi'?",
+      opts: ["Yavin IV", "Hoth", "Endor", "Sullust"],
+      answer: 2,
+      cat: "Planeten",
+      explain: "De tweede Death Star werd boven de maan Endor gebouwd en vernietigd."
+    },
+    {
+      q: "Welke Jedi confronteerde Palpatine voordat Anakin ingreep in 'Revenge of the Sith'?",
+      opts: ["Obi-Wan Kenobi", "Yoda", "Mace Windu", "Ki-Adi-Mundi"],
+      answer: 2,
+      cat: "Jedi",
+      explain: "Mace Windu confronteerde Palpatine, maar Anakin greep in en sneed Mace's hand af."
+    },
+    {
+      q: "Wat is de naam van de speciale Clone eenheden in 'Attack of the Clones'?",
+      opts: ["Battle Droids", "Clone Troopers", "Storm Troopers", "Death Troopers"],
+      answer: 1,
+      cat: "Militair",
+      explain: "Clone Troopers werden geproduceerd op Kamino op basis van Jango Fett's DNA."
+    },
+    {
+      q: "Welk midi-chloriaan getal had Anakin Skywalker, het hoogste ooit gemeten?",
+      opts: ["Meer dan 12.000", "Meer dan 15.000", "Meer dan 20.000", "Meer dan 25.000"],
+      answer: 2,
+      cat: "De Force",
+      explain: "Anakin had meer dan 20.000 midi-chlorianen per cel – hoger dan Yoda zelf."
+    },
+    {
+      q: "Wie is de bounty hunter die Han Solo bevriest in carboniet?",
+      opts: ["Greedo", "Bossk", "Boba Fett", "Dengar"],
+      answer: 2,
+      cat: "Personages",
+      explain: "Boba Fett leverde Han Solo ingevroren in carboniet af bij Jabba the Hutt."
+    },
+    {
+      q: "Hoe heet de planeet waar de Jedi Tempel zich bevond?",
+      opts: ["Naboo", "Alderaan", "Coruscant", "Jedha"],
+      answer: 2,
+      cat: "Planeten",
+      explain: "De Jedi Tempel stond op de kernplaneet Coruscant, de galactische hoofdstad."
+    },
+    {
+      q: "Wat doet Order 66?",
+      opts: [
+        "Alle Sith vernietigen",
+        "Alle Jedi als verraders executeren",
+        "De Republiek ontbinden",
+        "De Clone Wars beëindigen"
+      ],
+      answer: 1,
+      cat: "Geschiedenis",
+      explain: "Order 66 activeerde een chip in de Clone Troopers die hen opdroeg alle Jedi te doden."
+    },
+    {
+      q: "Welke alien soort is Greedo, de bounty hunter die Han Solo confronteert?",
+      opts: ["Twi'lek", "Rodian", "Zabrak", "Nautolan"],
+      answer: 1,
+      cat: "Soorten",
+      explain: "Greedo is een Rodian, herkenbaar aan zijn groene huid en grote ogen."
+    },
+    {
+      q: "Op welke planeet vindt de slag om Echo Base plaats?",
+      opts: ["Dagobah", "Endor", "Hoth", "Mustafar"],
+      answer: 2,
+      cat: "Slagen",
+      explain: "De Slag om Hoth was een grote overwinning voor het Keizerrijk op de ijsplaneet Hoth."
+    },
+    {
+      q: "Hoe heet de organisatie die vecht tegen het Galactisch Keizerrijk in de originele trilogie?",
+      opts: ["De Senaat", "De Alliantie voor het Herstel van de Republiek", "De First Order", "De Mandalorianen"],
+      answer: 1,
+      cat: "Organisaties",
+      explain: "De Rebellenalliantie, officieel de Alliantie voor het Herstel van de Republiek, streed tegen het Keizerrijk."
+    },
+  ],
+  hard: [
+    {
+      q: "Wat is de naam van de planeet waar de Sith Orde zijn oorsprong vond?",
+      opts: ["Korriban / Moraband", "Malachor", "Exegol", "Ziost"],
+      answer: 0,
+      cat: "Sith Lore",
+      explain: "Korriban (ook bekend als Moraband) is de thuisplaneet van de Sith en hun heilige grafplek."
+    },
+    {
+      q: "Welk wapen gebruikt Ahsoka Tano in 'The Clone Wars'?",
+      opts: [
+        "Twee paarse lightsabers",
+        "Een witte en een groene lightsaber",
+        "Een blauwe lightsaber en een shoto",
+        "Twee witte lightsabers"
+      ],
+      answer: 2,
+      cat: "Wapens",
+      explain: "Ahsoka vocht met een blauwe lightsaber en een kortere shoto lightsaber."
+    },
+    {
+      q: "Wie codificeerde de Jedi Code in zijn huidige vorm na de Sith Wars?",
+      opts: ["Yoda", "Odan-Urr", "Rajivari", "Garon Jard"],
+      answer: 1,
+      cat: "Jedi Lore",
+      explain: "Jedi Meester Odan-Urr codificeerde de Jedi Code na de Grote Sith War."
+    },
+    {
+      q: "Hoe heet de techniek waarbij een Force-gebruiker zijn bewustzijn bewaart na de dood?",
+      opts: ["Force Projection", "Force Ghost", "Essence Transfer", "Morichro"],
+      answer: 1,
+      cat: "De Force",
+      explain: "Force Ghosts kunnen na de dood communiceren met de levenden – Qui-Gon leerde dit als eerste."
+    },
+    {
+      q: "Welk type schip is de Millennium Falcon?",
+      opts: ["YT-1300f freighter", "YT-2400 freighter", "Firespray-31", "VCX-100"],
+      answer: 0,
+      cat: "Ruimteschepen",
+      explain: "De Millennium Falcon is een YT-1300f lichte vrachter, veel gemodificeerd door Han en Lando."
+    },
+    {
+      q: "Wat is de naam van het Mandaloriaanse staal dat als valuta wordt gebruikt?",
+      opts: ["Credits", "Calamari Flan", "Darsidian", "Beskar"],
+      answer: 3,
+      cat: "Mandalorians",
+      explain: "Beskar is het beroemde Mandaloriaans staal – extreem waardevol en gebruikt als valuta én wapenuitrusting."
+    },
+    {
+      q: "Op welke mystieke planeet ontmoeten Anakin, Obi-Wan en Ahsoka de Vader van de Force?",
+      opts: ["Mortis", "Malachor", "Atollon", "Dathomir"],
+      answer: 0,
+      cat: "Clone Wars",
+      explain: "Op Mortis ontmoeten ze de Vader van de Force, zijn zoon en dochter in een mythische dimensie."
+    },
+    {
+      q: "Welke Sith-lord stond achter zowel de Republiek als de Separatisten tijdens de Clone Wars?",
+      opts: ["Darth Plagueis", "Darth Maul", "Darth Tyranus (Dooku)", "Darth Sidious (Palpatine)"],
+      answer: 3,
+      cat: "Sith",
+      explain: "Palpatine/Sidious leidde beide kanten van de Clone Wars – als Sheev Palpatine én als Darth Sidious."
+    },
+    {
+      q: "Hoe heet de Sith-techniek waarbij een wezen zijn essentie in een object opslaat om onsterfelijk te worden?",
+      opts: ["Force Ghost", "Essence Transfer", "Sith Alchemy", "Thought Bomb"],
+      answer: 1,
+      cat: "Sith Lore",
+      explain: "Essence Transfer is de Sith-techniek om het bewustzijn te verplaatsen naar een ander lichaam of object."
+    },
+    {
+      q: "Wie is de biologische vader van Boba Fett?",
+      opts: ["Cad Bane", "Jango Fett", "Zam Wesell", "Bossk"],
+      answer: 1,
+      cat: "Personages",
+      explain: "Boba is een niet-gemodificeerde kloon van Jango Fett, die hem als zijn zoon adopteerde."
+    },
+    {
+      q: "Op welke vulkaanplaneet verliest Anakin zijn ledematen in zijn duel met Obi-Wan?",
+      opts: ["Coruscant", "Geonosis", "Mustafar", "Utapau"],
+      answer: 2,
+      cat: "Slagen",
+      explain: "Op de vulkaan-planeet Mustafar verloor Anakin zijn ledematen en werd bijna verbrand."
+    },
+    {
+      q: "Welk uniek kenmerk had General Grievous?",
+      opts: [
+        "Hij was een Force-gebruiker",
+        "Hij had vier armen met vier lightsabers",
+        "Hij was onsterfelijk",
+        "Hij kon cloaken"
+      ],
+      answer: 1,
+      cat: "Personages",
+      explain: "General Grievous was een cyborg die vier armen kon gebruiken en lightsabers van verslagen Jedi bewaarde."
+    },
+  ]
+};
+
+/* ── State ── */
+let difficulty = 'easy';
+let questions  = [];
+let current    = 0;
+let score      = 0;
+let answers    = [];
+let timerInterval = null;
+let timeLeft   = 0;
+let totalTime  = 0;
+let timeTaken  = [];
+
+const TIMER_SECONDS = { easy: 20, medium: 15, hard: 12 };
+
+/* ── DOM refs ── */
+const startScreen   = document.getElementById('startScreen');
+const quizScreen    = document.getElementById('quizScreen');
+const resultsScreen = document.getElementById('resultsScreen');
+const diffBtns      = document.querySelectorAll('.diff-btn');
+const startBtn      = document.getElementById('startBtn');
+const qCounter      = document.getElementById('qCounter');
+const scoreDisplay  = document.getElementById('scoreDisplay');
+const timerBar      = document.getElementById('timerBar');
+const progressDots  = document.getElementById('progressDots');
+const questionCard  = document.getElementById('questionCard');
+const categoryTag   = document.getElementById('categoryTag');
+const questionText  = document.getElementById('questionText');
+const answersGrid   = document.getElementById('answersGrid');
+const feedback      = document.getElementById('feedback');
+const nextBtn       = document.getElementById('nextBtn');
+
+/* ── Difficulty selection ── */
+diffBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    diffBtns.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    difficulty = btn.dataset.diff;
+  });
+});
+
+/* ── Start game ── */
+startBtn.addEventListener('click', startGame);
+
+function startGame() {
+  const pool = [...QUESTIONS[difficulty]];
+  shuffle(pool);
+  questions = pool.slice(0, 10);
+  current   = 0;
+  score     = 0;
+  answers   = [];
+  timeTaken = [];
+
+  showScreen('quiz');
+  buildDots();
+  showQuestion();
+}
+
+/* ── Build progress dots ── */
+function buildDots() {
+  progressDots.innerHTML = questions.map((_, i) =>
+    `<div class="dot${i === 0 ? ' current' : ''}" id="dot${i}"></div>`
+  ).join('');
+}
+
+function updateDot(idx, correct) {
+  const dot = document.getElementById('dot' + idx);
+  if (!dot) return;
+  dot.classList.remove('current');
+  dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+  const next = document.getElementById('dot' + (idx + 1));
+  if (next) next.classList.add('current');
+}
+
+/* ── Show question ── */
+function showQuestion() {
+  clearTimer();
+  feedback.className = 'feedback';
+  nextBtn.className  = 'next-btn';
+
+  const q = questions[current];
+  qCounter.textContent     = `Vraag ${current + 1} / ${questions.length}`;
+  scoreDisplay.textContent = `Score: ${score}`;
+  categoryTag.textContent  = q.cat;
+  questionText.textContent = q.q;
+
+  const letters = ['A', 'B', 'C', 'D'];
+  answersGrid.innerHTML = q.opts.map((opt, i) => `
+    <button class="answer-btn" onclick="pickAnswer(${i})">
+      <span class="letter">${letters[i]}</span>
+      ${opt}
+    </button>
+  `).join('');
+
+  questionCard.style.animation = 'none';
+  requestAnimationFrame(() => { questionCard.style.animation = ''; });
+
+  startTimer(TIMER_SECONDS[difficulty]);
+}
+
+/* ── Timer ── */
+function startTimer(seconds) {
+  timeLeft  = seconds;
+  totalTime = seconds;
+  updateTimerBar();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerBar();
+    if (timeLeft <= 0) {
+      clearTimer();
+      autoTimeout();
+    }
+  }, 1000);
+}
+
+function updateTimerBar() {
+  const pct = timeLeft / totalTime * 100;
+  timerBar.style.width = pct + '%';
+  if (pct > 50)      timerBar.style.background = 'var(--green)';
+  else if (pct > 25) timerBar.style.background = 'var(--gold)';
+  else               timerBar.style.background = 'var(--red)';
+}
+
+function clearTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function autoTimeout() {
+  timeTaken.push(totalTime);
+  disableAnswers();
+  const q = questions[current];
+  markCorrectAnswer(q.answer);
+  showFeedback(false, q.answer, q.explain, true);
+  answers.push({ q: q.q, chosen: -1, correct: q.answer, ok: false, opts: q.opts });
+  updateDot(current, false);
+  nextBtn.className = 'next-btn show';
+}
+
+/* ── Pick answer ── */
+function pickAnswer(idx) {
+  clearTimer();
+  timeTaken.push(totalTime - timeLeft);
+  disableAnswers();
+
+  const q       = questions[current];
+  const correct = idx === q.answer;
+
+  const btns = answersGrid.querySelectorAll('.answer-btn');
+  btns[idx].classList.add(correct ? 'correct' : 'wrong');
+  markCorrectAnswer(q.answer);
+
+  if (correct) {
+    const timeBonus = Math.max(0, Math.floor((timeLeft / totalTime) * 50));
+    score += 100 + timeBonus;
+    scoreDisplay.textContent = `Score: ${score}`;
+  }
+
+  showFeedback(correct, q.answer, q.explain, false);
+  answers.push({ q: q.q, chosen: idx, correct: q.answer, ok: correct, opts: q.opts });
+  updateDot(current, correct);
+  nextBtn.className = 'next-btn show';
+}
+
+function markCorrectAnswer(answerIdx) {
+  const btns = answersGrid.querySelectorAll('.answer-btn');
+  if (!btns[answerIdx].classList.contains('wrong')) {
+    btns[answerIdx].classList.add('correct');
+  }
+}
+
+function disableAnswers() {
+  answersGrid.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+}
+
+function showFeedback(correct, answerIdx, explain, timeout) {
+  const q = questions[current];
+  if (timeout) {
+    feedback.className = 'feedback wrong-fb show';
+    feedback.innerHTML = `<strong>Tijd op!</strong> Het juiste antwoord was: <strong>${q.opts[answerIdx]}</strong>.<br>${explain}`;
+  } else if (correct) {
+    feedback.className = 'feedback correct-fb show';
+    feedback.innerHTML = `<strong>Correct!</strong> ${explain}`;
+  } else {
+    feedback.className = 'feedback wrong-fb show';
+    feedback.innerHTML = `<strong>Fout!</strong> Het juiste antwoord was: <strong>${q.opts[answerIdx]}</strong>.<br>${explain}`;
+  }
+}
+
+/* ── Next question ── */
+nextBtn.addEventListener('click', () => {
+  current++;
+  if (current < questions.length) {
+    showQuestion();
+  } else {
+    showResults();
+  }
+});
+
+/* ── Results ── */
+function showResults() {
+  showScreen('results');
+
+  const correct = answers.filter(a => a.ok).length;
+  const wrong   = answers.length - correct;
+  const avgTime = timeTaken.length
+    ? Math.round(timeTaken.reduce((s, t) => s + t, 0) / timeTaken.length)
+    : 0;
+
+  document.getElementById('scoreBig').textContent    = score;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent   = wrong;
+  document.getElementById('statTime').textContent    = avgTime + 's';
+
+  const pct = correct / questions.length;
+  let icon, title, sub;
+  if (pct === 1)       { icon = '🏆'; title = 'Jedi Grootmeester';   sub = 'Perfecte score – de Force is sterk in jou!'; }
+  else if (pct >= 0.8) { icon = '⚔️';  title = 'Jedi Knight';        sub = 'Indrukwekkend! Je kennis is groot.'; }
+  else if (pct >= 0.6) { icon = '🌟'; title = 'Jedi Padawan';        sub = 'Goed gedaan, maar er valt nog te leren.'; }
+  else if (pct >= 0.4) { icon = '🤖'; title = 'Rebel Rekruut';       sub = 'Je bent op weg, oefen meer met de films!'; }
+  else                 { icon = '💀'; title = 'Verloren in de Force'; sub = 'Herbekijk de saga en probeer opnieuw!'; }
+
+  document.getElementById('rankIcon').textContent  = icon;
+  document.getElementById('rankTitle').textContent = title;
+  document.getElementById('rankSub').textContent   = sub;
+
+  document.getElementById('answersReview').innerHTML =
+    `<div class="review-title">Antwoorden overzicht</div>` +
+    answers.map(a => `
+      <div class="review-item ${a.ok ? 'r-correct' : 'r-wrong'}">
+        <div class="review-q">${a.q}</div>
+        <div class="review-a">
+          ${a.ok
+            ? `<span class="ok">✓ ${a.opts[a.correct]}</span>`
+            : `<span class="bad">${a.chosen >= 0 ? a.opts[a.chosen] : 'Tijd op'}</span>
+               → <span class="ok">✓ ${a.opts[a.correct]}</span>`
+          }
+        </div>
+      </div>
+    `).join('');
+}
+
+/* ── Retry / Menu ── */
+document.getElementById('retryBtn').addEventListener('click', startGame);
+document.getElementById('menuBtn').addEventListener('click', () => showScreen('start'));
+
+/* ── Screen helpers ── */
+function showScreen(name) {
+  [startScreen, quizScreen, resultsScreen].forEach(s => s.classList.remove('active'));
+  ({ start: startScreen, quiz: quizScreen, results: resultsScreen })[name].classList.add('active');
+}
+
+/* ── Utils ── */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+</script>
+</body>
+</html>
