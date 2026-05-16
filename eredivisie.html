@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eredivisie 2024/25</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --surface3: #2e2e2e;
+      --accent: #FF6200;
+      --accent-dim: rgba(255, 98, 0, 0.15);
+      --blue: #1e88e5;
+      --blue-dim: rgba(30, 136, 229, 0.15);
+      --yellow: #ffd600;
+      --yellow-dim: rgba(255, 214, 0, 0.12);
+      --red: #e53935;
+      --red-dim: rgba(229, 57, 53, 0.15);
+      --text: #f0f0f0;
+      --text-secondary: #9e9e9e;
+      --border: #333;
+      --cl: var(--blue);
+      --el: var(--accent);
+      --uecl: var(--yellow);
+      --rel: var(--red);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 16px 48px;
+    }
+
+    a.back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      transition: color 0.2s;
+    }
+    a.back-link:hover { color: var(--accent); }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 20px;
+      margin-bottom: 12px;
+    }
+    .lion-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    header p {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+
+    /* === STANDINGS TABLE === */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-header .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .card-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 560px;
+    }
+
+    thead th {
+      padding: 8px 10px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+      white-space: nowrap;
+    }
+    thead th.left { text-align: left; }
+    thead th:first-child { width: 32px; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody td {
+      padding: 9px 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    tbody td.left { text-align: left; }
+
+    .pos {
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      position: relative;
+    }
+    .pos-indicator {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 20px;
+      border-radius: 2px;
+    }
+
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .team-abbr {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      letter-spacing: -0.3px;
+    }
+    .team-name {
+      font-weight: 600;
+      font-size: 0.84rem;
+    }
+
+    .pts {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .gd-pos { color: #66bb6a; }
+    .gd-neg { color: #ef5350; }
+    .gd-zero { color: var(--text-secondary); }
+
+    /* Row zone highlights */
+    tr.zone-cl    { background: var(--blue-dim); }
+    tr.zone-el    { background: var(--accent-dim); }
+    tr.zone-uecl  { background: var(--yellow-dim); }
+    tr.zone-rel   { background: var(--red-dim); }
+    tr.zone-cl:hover   { background: rgba(30,136,229,0.22); }
+    tr.zone-el:hover   { background: rgba(255,98,0,0.22); }
+    tr.zone-uecl:hover { background: rgba(255,214,0,0.18); }
+    tr.zone-rel:hover  { background: rgba(229,57,53,0.22); }
+
+    /* === LEGEND === */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* === RESULTS === */
+    .matchday-group {
+      margin-bottom: 18px;
+    }
+    .matchday-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      padding: 0 2px;
+    }
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .result-date {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      width: 36px;
+      flex-shrink: 0;
+    }
+    .result-teams {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .result-team {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .result-team.home { text-align: right; }
+    .result-team.away { text-align: left; }
+    .result-team.winner { color: var(--text); }
+    .result-team.loser { color: var(--text-secondary); }
+    .result-score {
+      background: var(--surface3);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+      min-width: 52px;
+      text-align: center;
+    }
+
+    /* === STATS STRIP === */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      display: block;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 480px) {
+      body { padding: 12px 10px 40px; }
+      .stats-strip { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+      .stat-value { font-size: 1.2rem; }
+      table { font-size: 0.78rem; }
+      .team-abbr { width: 24px; height: 24px; font-size: 0.55rem; }
+      .team-name { font-size: 0.78rem; }
+    }
+
+    /* Scrollbar */
+    .table-wrapper::-webkit-scrollbar { height: 4px; }
+    .table-wrapper::-webkit-scrollbar-track { background: var(--surface); }
+    .table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back-link">&#8592; Terug naar overzicht</a>
+
+  <header>
+    <div class="header-badge">
+      <span class="lion-icon">🦁</span>
+      <h1>Eredivisie</h1>
+    </div>
+    <p>Seizoen 2024/25 &mdash; Eindstand</p>
+  </header>
+
+  <!-- Stats strip -->
+  <div class="stats-strip" id="statsStrip"></div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Champions League (1–4)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Europa League (5)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Conference League (6)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Degradatie (16–18)</div>
+  </div>
+
+  <!-- Standings card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="dot"></div>
+      <h2>Competitiestand</h2>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th class="left">Club</th>
+            <th title="Gespeeld">GS</th>
+            <th title="Gewonnen">W</th>
+            <th title="Gelijk">G</th>
+            <th title="Verloren">V</th>
+            <th title="Goals voor">DV</th>
+            <th title="Goals tegen">DT</th>
+            <th title="Doelsaldo">DS</th>
+            <th title="Punten">Ptn</th>
+          </tr>
+        </thead>
+        <tbody id="standingsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent results -->
+  <div class="card">
+    <div class="card-header">
+      <div class="dot"></div>
+      <h2>Recente Uitslagen</h2>
+    </div>
+    <div style="padding: 14px 16px;" id="resultsContainer"></div>
+  </div>
+
+  <script>
+    // ─── DATA ────────────────────────────────────────────────────────────────
+
+    const teams = [
+      // name, short, color-bg, color-text, played, won, draw, loss, gf, ga
+      { name: "PSV Eindhoven",        short: "PSV",  bg: "#e10600", fg: "#fff",    p: 34, w: 28, d: 4,  l: 2,  gf: 106, ga: 30 },
+      { name: "Ajax",                 short: "AJX",  bg: "#cc0000", fg: "#fff",    p: 34, w: 24, d: 5,  l: 5,  gf: 87,  ga: 40 },
+      { name: "AZ Alkmaar",           short: "AZ",   bg: "#e60000", fg: "#fff",    p: 34, w: 21, d: 6,  l: 7,  gf: 78,  ga: 45 },
+      { name: "Feyenoord",            short: "FEY",  bg: "#cc0000", fg: "#fff",    p: 34, w: 20, d: 7,  l: 7,  gf: 74,  ga: 48 },
+      { name: "FC Utrecht",           short: "UTR",  bg: "#cc0000", fg: "#fff",    p: 34, w: 17, d: 6,  l: 11, gf: 62,  ga: 52 },
+      { name: "FC Twente",            short: "TWE",  bg: "#c8102e", fg: "#fff",    p: 34, w: 16, d: 7,  l: 11, gf: 58,  ga: 49 },
+      { name: "NEC Nijmegen",         short: "NEC",  bg: "#007b3a", fg: "#fff",    p: 34, w: 14, d: 8,  l: 12, gf: 50,  ga: 50 },
+      { name: "Go Ahead Eagles",      short: "GAE",  bg: "#ffd700", fg: "#000",    p: 34, w: 13, d: 8,  l: 13, gf: 48,  ga: 55 },
+      { name: "Heracles Almelo",      short: "HER",  bg: "#000",    fg: "#fff",    p: 34, w: 12, d: 9,  l: 13, gf: 45,  ga: 54 },
+      { name: "Sparta Rotterdam",     short: "SPA",  bg: "#c8102e", fg: "#fff",    p: 34, w: 11, d: 9,  l: 14, gf: 46,  ga: 58 },
+      { name: "PEC Zwolle",           short: "PEC",  bg: "#003da5", fg: "#fff",    p: 34, w: 10, d: 9,  l: 15, gf: 44,  ga: 61 },
+      { name: "RKC Waalwijk",         short: "RKC",  bg: "#003da5", fg: "#fff",    p: 34, w: 10, d: 8,  l: 16, gf: 42,  ga: 64 },
+      { name: "Heerenveen",           short: "HVN",  bg: "#00338d", fg: "#fff",    p: 34, w: 9,  d: 9,  l: 16, gf: 40,  ga: 62 },
+      { name: "Fortuna Sittard",      short: "FOR",  bg: "#ffcc00", fg: "#000",    p: 34, w: 9,  d: 7,  l: 18, gf: 38,  ga: 66 },
+      { name: "Almere City FC",       short: "ALM",  bg: "#e2001a", fg: "#fff",    p: 34, w: 7,  d: 8,  l: 19, gf: 36,  ga: 72 },
+      { name: "Willem II",            short: "WII",  bg: "#c8102e", fg: "#fff",    p: 34, w: 7,  d: 7,  l: 20, gf: 35,  ga: 74 },
+      { name: "Excelsior Rotterdam",  short: "EXC",  bg: "#e10600", fg: "#fff",    p: 34, w: 5,  d: 7,  l: 22, gf: 32,  ga: 82 },
+      { name: "NAC Breda",            short: "NAC",  bg: "#f7a600", fg: "#000",    p: 34, w: 4,  d: 5,  l: 25, gf: 28,  ga: 88 },
+    ];
+
+    // Compute derived stats
+    teams.forEach(t => {
+      t.gd  = t.gf - t.ga;
+      t.pts = t.w * 3 + t.d;
+    });
+
+    // Sort by pts desc, then gd desc, then gf desc
+    teams.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+
+    // ─── MATCHDAYS ───────────────────────────────────────────────────────────
+
+    const matchdays = [
+      {
+        label: "Speelronde 34 – 11 mei 2025",
+        matches: [
+          { home: "PSV Eindhoven",    hs: 4, away: "NAC Breda",       as: 0 },
+          { home: "Ajax",             hs: 3, away: "Excelsior Rotterdam", as: 1 },
+          { home: "AZ Alkmaar",       hs: 2, away: "Almere City FC",  as: 0 },
+          { home: "Feyenoord",        hs: 3, away: "RKC Waalwijk",    as: 1 },
+          { home: "FC Utrecht",       hs: 2, away: "Fortuna Sittard", as: 0 },
+          { home: "FC Twente",        hs: 1, away: "Sparta Rotterdam", as: 1 },
+          { home: "NEC Nijmegen",     hs: 2, away: "PEC Zwolle",      as: 2 },
+          { home: "Heerenveen",       hs: 0, away: "Go Ahead Eagles", as: 2 },
+          { home: "Heracles Almelo",  hs: 1, away: "Willem II",       as: 0 },
+        ]
+      },
+      {
+        label: "Speelronde 33 – 4 mei 2025",
+        matches: [
+          { home: "PSV Eindhoven",    hs: 5, away: "Heerenveen",      as: 1 },
+          { home: "Ajax",             hs: 2, away: "FC Twente",       as: 0 },
+          { home: "Feyenoord",        hs: 2, away: "AZ Alkmaar",      as: 2 },
+          { home: "Go Ahead Eagles",  hs: 1, away: "FC Utrecht",      as: 3 },
+          { home: "Almere City FC",   hs: 0, away: "NEC Nijmegen",    as: 1 },
+          { home: "Sparta Rotterdam", hs: 1, away: "RKC Waalwijk",    as: 0 },
+          { home: "PEC Zwolle",       hs: 2, away: "Excelsior Rotterdam", as: 0 },
+          { home: "Willem II",        hs: 1, away: "Fortuna Sittard", as: 1 },
+          { home: "NAC Breda",        hs: 0, away: "Heracles Almelo", as: 2 },
+        ]
+      },
+      {
+        label: "Speelronde 32 – 27 april 2025",
+        matches: [
+          { home: "AZ Alkmaar",       hs: 3, away: "PSV Eindhoven",   as: 1 },
+          { home: "FC Utrecht",       hs: 2, away: "Feyenoord",       as: 1 },
+          { home: "FC Twente",        hs: 0, away: "Ajax",            as: 2 },
+          { home: "NEC Nijmegen",     hs: 1, away: "Sparta Rotterdam", as: 0 },
+          { home: "Heerenveen",       hs: 1, away: "NAC Breda",       as: 2 },
+          { home: "Heracles Almelo",  hs: 3, away: "Almere City FC",  as: 0 },
+          { home: "RKC Waalwijk",     hs: 0, away: "Go Ahead Eagles", as: 1 },
+          { home: "Excelsior Rotterdam", hs: 1, away: "Willem II",    as: 2 },
+          { home: "Fortuna Sittard",  hs: 0, away: "PEC Zwolle",      as: 2 },
+        ]
+      },
+      {
+        label: "Speelronde 31 – 20 april 2025",
+        matches: [
+          { home: "PSV Eindhoven",    hs: 3, away: "AZ Alkmaar",      as: 0 },
+          { home: "Ajax",             hs: 4, away: "Heerenveen",      as: 1 },
+          { home: "Feyenoord",        hs: 2, away: "NEC Nijmegen",    as: 0 },
+          { home: "FC Utrecht",       hs: 1, away: "FC Twente",       as: 1 },
+          { home: "Go Ahead Eagles",  hs: 2, away: "Heracles Almelo", as: 2 },
+          { home: "Sparta Rotterdam", hs: 0, away: "Excelsior Rotterdam", as: 0 },
+          { home: "Almere City FC",   hs: 1, away: "RKC Waalwijk",    as: 1 },
+          { home: "Willem II",        hs: 0, away: "PEC Zwolle",      as: 1 },
+          { home: "NAC Breda",        hs: 1, away: "Fortuna Sittard", as: 0 },
+        ]
+      },
+      {
+        label: "Speelronde 30 – 13 april 2025",
+        matches: [
+          { home: "AZ Alkmaar",       hs: 2, away: "FC Utrecht",      as: 1 },
+          { home: "NEC Nijmegen",     hs: 1, away: "Ajax",            as: 3 },
+          { home: "FC Twente",        hs: 2, away: "PSV Eindhoven",   as: 3 },
+          { home: "Heracles Almelo",  hs: 1, away: "Feyenoord",       as: 2 },
+          { home: "Heerenveen",       hs: 2, away: "Almere City FC",  as: 1 },
+          { home: "RKC Waalwijk",     hs: 1, away: "NAC Breda",       as: 1 },
+          { home: "PEC Zwolle",       hs: 0, away: "Sparta Rotterdam", as: 0 },
+          { home: "Fortuna Sittard",  hs: 1, away: "Go Ahead Eagles", as: 2 },
+          { home: "Excelsior Rotterdam", hs: 0, away: "Willem II",    as: 1 },
+        ]
+      },
+    ];
+
+    // ─── RENDER STANDINGS ────────────────────────────────────────────────────
+
+    function getZoneClass(pos) {
+      if (pos <= 4)  return "zone-cl";
+      if (pos === 5) return "zone-el";
+      if (pos === 6) return "zone-uecl";
+      if (pos >= 16) return "zone-rel";
+      return "";
+    }
+
+    function getIndicatorColor(pos) {
+      if (pos <= 4)  return "var(--blue)";
+      if (pos === 5) return "var(--accent)";
+      if (pos === 6) return "var(--yellow)";
+      if (pos >= 16) return "var(--red)";
+      return "transparent";
+    }
+
+    const tbody = document.getElementById("standingsBody");
+    teams.forEach((t, i) => {
+      const pos = i + 1;
+      const gdClass = t.gd > 0 ? "gd-pos" : t.gd < 0 ? "gd-neg" : "gd-zero";
+      const gdStr   = t.gd > 0 ? "+" + t.gd : String(t.gd);
+      const zoneClass = getZoneClass(pos);
+      const indColor  = getIndicatorColor(pos);
+
+      const tr = document.createElement("tr");
+      if (zoneClass) tr.className = zoneClass;
+      tr.innerHTML = `
+        <td class="pos" style="position:relative; padding-left: 12px;">
+          <span class="pos-indicator" style="background:${indColor}"></span>
+          ${pos}
+        </td>
+        <td class="left">
+          <div class="team-cell">
+            <div class="team-abbr" style="background:${t.bg};color:${t.fg}">${t.short}</div>
+            <span class="team-name">${t.name}</span>
+          </div>
+        </td>
+        <td>${t.p}</td>
+        <td>${t.w}</td>
+        <td>${t.d}</td>
+        <td>${t.l}</td>
+        <td>${t.gf}</td>
+        <td>${t.ga}</td>
+        <td class="${gdClass}">${gdStr}</td>
+        <td class="pts">${t.pts}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // ─── RENDER STATS STRIP ──────────────────────────────────────────────────
+
+    const totalGoals = teams.reduce((s, t) => s + t.gf, 0);
+    const totalMatches = (teams[0].p * teams.length) / 2;
+    const avgGoals = (totalGoals / totalMatches).toFixed(1);
+    const topScorer = { name: "L. Openda", goals: 28 }; // PSV top scorer
+    const champion = teams[0];
+
+    document.getElementById("statsStrip").innerHTML = `
+      <div class="stat-box">
+        <span class="stat-value">${totalGoals}</span>
+        <div class="stat-label">Totaal goals</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">${avgGoals}</span>
+        <div class="stat-label">Goals p/duel</div>
+      </div>
+      <div class="stat-box">
+        <span class="stat-value">${champion.pts}</span>
+        <div class="stat-label">Kampioenspunten</div>
+      </div>
+    `;
+
+    // ─── RENDER RESULTS ───────────────────────────────────────────────────────
+
+    const container = document.getElementById("resultsContainer");
+
+    matchdays.forEach(day => {
+      const group = document.createElement("div");
+      group.className = "matchday-group";
+
+      const label = document.createElement("div");
+      label.className = "matchday-label";
+      label.textContent = day.label;
+      group.appendChild(label);
+
+      const list = document.createElement("div");
+      list.className = "result-list";
+
+      day.matches.forEach(m => {
+        const homeWin = m.hs > m.as;
+        const awayWin = m.as > m.hs;
+        const draw    = m.hs === m.as;
+
+        const homeClass = (homeWin || draw) ? "winner" : "loser";
+        const awayClass = (awayWin || draw) ? "winner" : "loser";
+
+        const card = document.createElement("div");
+        card.className = "result-card";
+        card.innerHTML = `
+          <div class="result-teams">
+            <div class="result-team home ${homeClass}">${m.home}</div>
+            <div class="result-score">${m.hs} – ${m.as}</div>
+            <div class="result-team away ${awayClass}">${m.away}</div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      group.appendChild(list);
+      container.appendChild(group);
+    });
+  </script>
+</body>
+</html>

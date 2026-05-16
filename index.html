@@ -1,908 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokédex</title>
+  <title>Experimenten</title>
   <style>
-    :root {
-      --bg: #1a1a2e;
-      --surface: #16213e;
-      --surface2: #0f3460;
-      --accent: #3d7dca;
-      --yellow: #ffcb05;
-      --text: #e8e8e8;
-      --muted: #8899aa;
-    }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: #0d0d0d;
+      color: #e0e0e0;
       min-height: 100vh;
-      padding: 20px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
     }
 
     header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 48px;
     }
 
-    header h1 {
-      font-size: 2.4rem;
-      color: var(--yellow);
-      text-shadow: 2px 2px 0 var(--accent);
+    h1 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .sub {
+      color: #555;
+      font-size: 0.82rem;
       letter-spacing: 3px;
-      font-weight: 900;
+      text-transform: uppercase;
+      margin-top: 6px;
     }
-
-    header p {
-      color: var(--muted);
-      margin-top: 4px;
-      font-size: 0.8rem;
-    }
-
-    .controls {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .controls input,
-    .controls select {
-      padding: 10px 18px;
-      border-radius: 24px;
-      border: 2px solid var(--accent);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .controls input:focus,
-    .controls select:focus { border-color: var(--yellow); }
-    .controls input { width: 280px; }
-    .controls select { cursor: pointer; }
-
-    #statusBar {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-bottom: 10px;
-      min-height: 20px;
-    }
-
-    .grid-wrapper { max-width: 980px; margin: 0 auto; }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      min-height: 320px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
     }
 
     .card {
-      background: var(--surface);
-      border: 2px solid var(--accent);
-      border-radius: 14px;
-      padding: 14px 10px 12px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
+      background: #181818;
+      border: 1px solid #252525;
+      border-radius: 16px;
+      padding: 32px 28px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.22s ease;
       position: relative;
-    }
-
-    .card:hover {
-      border-color: var(--yellow);
-      background: var(--surface2);
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(61,125,202,0.3);
-    }
-
-    .card.active {
-      border-color: var(--yellow);
-      background: var(--surface2);
-      box-shadow: 0 0 0 3px rgba(255,203,5,0.35), 0 6px 24px rgba(61,125,202,0.4);
-      transform: translateY(-3px);
-    }
-
-    .card .poke-num {
-      font-size: 0.68rem;
-      color: var(--muted);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .card img {
-      width: 88px;
-      height: 88px;
-      image-rendering: pixelated;
-      display: block;
-      margin: 2px auto 4px;
-    }
-
-    .card .poke-name {
-      font-size: 0.82rem;
-      font-weight: 700;
-      text-transform: capitalize;
-    }
-
-    .card .base-star {
-      position: absolute;
-      top: 7px;
-      right: 9px;
-      font-size: 0.65rem;
-      color: var(--yellow);
-    }
-
-    .skeleton-card {
-      background: var(--surface);
-      border: 2px solid var(--surface2);
-      border-radius: 14px;
-      padding: 14px 10px 12px;
-      animation: pulse 1.6s ease infinite;
-    }
-
-    .skel-circle {
-      width: 88px; height: 88px;
-      background: var(--surface2);
-      border-radius: 50%;
-      margin: 8px auto;
-    }
-
-    .skel-line {
-      height: 10px;
-      background: var(--surface2);
-      border-radius: 5px;
-      margin: 8px auto;
-    }
-
-    @keyframes pulse {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.45; }
-    }
-
-    .empty-state {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
-      line-height: 2;
-    }
-
-    .progress-bar-wrap {
-      width: 220px;
-      height: 6px;
-      background: var(--surface2);
-      border-radius: 3px;
-      margin: 10px auto 0;
       overflow: hidden;
     }
 
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s ease;
-    }
-
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .btn {
-      padding: 8px 22px;
-      border-radius: 20px;
-      border: 2px solid var(--accent);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 0.88rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-weight: 600;
-    }
-
-    .btn:hover:not(:disabled) { background: var(--accent); }
-    .btn:disabled { opacity: 0.3; cursor: default; }
-
-    #pageInfo {
-      color: var(--muted);
-      font-size: 0.82rem;
-      min-width: 140px;
-      text-align: center;
-    }
-
-    /* ── Modal ── */
-    .modal-overlay {
-      position: fixed;
+    .card::before {
+      content: '';
+      position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.78);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-      backdrop-filter: blur(5px);
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      border-radius: 16px;
     }
 
-    .modal {
-      background: var(--surface);
-      border: 2px solid var(--yellow);
-      border-radius: 20px;
-      padding: 28px;
-      max-width: 530px;
-      width: 100%;
-      max-height: 88vh;
-      overflow-y: auto;
-      position: relative;
-      animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .card:hover { transform: translateY(-5px); border-color: transparent; }
+    .card:hover::before { opacity: 1; }
 
-    @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
-      to   { transform: scale(1);    opacity: 1; }
-    }
+    /* Per-card accent colors */
+    .card.pokedex { --accent: #3d7dca; --glow: rgba(61,125,202,0.15); }
+    .card.trivia  { --accent: #ffe81f; --glow: rgba(255,232,31,0.12); }
+    .card.eredivisie { --accent: #FF6200; --glow: rgba(255,98,0,0.15); }
 
-    .modal::-webkit-scrollbar { width: 4px; }
-    .modal::-webkit-scrollbar-track { background: transparent; }
-    .modal::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+    .card:hover { box-shadow: 0 12px 40px var(--glow); border-color: var(--accent); }
 
-    .modal-close {
-      position: absolute;
-      top: 14px; right: 16px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 1.4rem;
-      cursor: pointer;
-      line-height: 1;
-      transition: color 0.15s;
-    }
-
-    .modal-close:hover { color: var(--text); }
-
-    .modal-header { text-align: center; margin-bottom: 16px; }
-
-    .modal-img {
-      width: 164px;
-      height: 164px;
+    .card-icon {
+      font-size: 2.6rem;
+      margin-bottom: 16px;
       display: block;
-      margin: 0 auto 10px;
-      image-rendering: auto;
-      filter: drop-shadow(0 4px 12px rgba(61,125,202,0.4));
     }
 
-    .modal-num { color: var(--muted); font-size: 0.82rem; margin-bottom: 2px; }
-
-    .modal-header h2 {
-      text-transform: capitalize;
-      font-size: 1.55rem;
-      color: var(--yellow);
-    }
-
-    .type-badges { margin-top: 8px; }
-
-    .type-badge {
-      display: inline-block;
-      padding: 3px 11px;
-      border-radius: 12px;
-      font-size: 0.72rem;
+    .card-title {
+      font-size: 1.15rem;
       font-weight: 700;
-      margin: 2px;
-      text-transform: capitalize;
       color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      margin-bottom: 8px;
     }
 
-    .description {
-      color: var(--muted);
-      font-size: 0.83rem;
-      line-height: 1.65;
-      text-align: center;
-      margin: 12px 0 0;
+    .card-desc {
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.6;
     }
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 14px;
-      margin: 16px 0;
-    }
-
-    .info-item label {
-      display: block;
-      font-size: 0.67rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 3px;
-    }
-
-    .info-item span {
-      font-size: 0.88rem;
-      font-weight: 600;
-      text-transform: capitalize;
-    }
-
-    .section-title {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--accent);
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .stats { margin-bottom: 18px; }
-
-    .stat-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 5px;
-      font-size: 0.8rem;
-    }
-
-    .stat-name { width: 106px; color: var(--muted); }
-    .stat-val  { width: 30px; text-align: right; font-weight: 700; }
-
-    .stat-bar-bg {
-      flex: 1;
-      background: var(--surface2);
-      border-radius: 4px;
-      height: 7px;
-      overflow: hidden;
-    }
-
-    .stat-bar-fill { height: 100%; border-radius: 4px; }
-
-    /* Evolution chain */
-    .evo-chain-wrap {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .evo-arrow {
-      color: var(--muted);
-      font-size: 1.3rem;
-      align-self: center;
-      flex-shrink: 0;
-    }
-
-    .evo-group { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .evo-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      padding: 8px;
-      border-radius: 10px;
-      border: 1px solid var(--accent);
-      cursor: pointer;
-      transition: all 0.15s;
-      min-width: 68px;
-    }
-
-    .evo-card:hover {
-      border-color: var(--yellow);
-      background: var(--surface2);
-    }
-
-    .evo-card.current-poke {
-      border-color: var(--yellow);
-      background: var(--surface2);
-    }
-
-    .evo-card img {
-      width: 54px;
-      height: 54px;
-      image-rendering: pixelated;
-    }
-
-    .evo-card span {
+    .card-tag {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 3px 10px;
+      border-radius: 20px;
       font-size: 0.68rem;
-      text-transform: capitalize;
-      text-align: center;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     }
 
-    .modal-loading {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--muted);
-      font-size: 0.9rem;
+    .arrow {
+      position: absolute;
+      bottom: 28px;
+      right: 24px;
+      font-size: 1rem;
+      color: #333;
+      transition: color 0.2s, transform 0.2s;
     }
 
-    @media (max-width: 520px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      .controls input { width: 220px; }
+    .card:hover .arrow { color: var(--accent); transform: translateX(4px); }
+
+    footer {
+      margin-top: 48px;
+      color: #333;
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>&#x25C6; Pokédex &#x25C6;</h1>
-  <p>Arrow keys to navigate &nbsp;·&nbsp; Enter to open &nbsp;·&nbsp; Esc to close &nbsp;·&nbsp; PageUp / PageDown to change page</p>
-  <p style="margin-top:8px"><a href="trivia.html" style="color:var(--yellow);font-size:0.8rem;text-decoration:none;letter-spacing:1px">&#x2605; Star Wars Trivia &#x2192;</a></p>
+  <h1>Experimenten</h1>
+  <div class="sub">Kies een project</div>
 </header>
 
-<div class="controls">
-  <input type="search" id="searchInput" placeholder="&#x1F50D; Search Pokémon name or #..." autocomplete="off">
-  <select id="filterSelect">
-    <option value="all">All Pokémon</option>
-    <option value="base">Base Pokémon Only</option>
-  </select>
+<div class="grid">
+
+  <a class="card pokedex" href="pokedex.html">
+    <span class="card-icon">&#x25C6;</span>
+    <div class="card-title">Pokédex</div>
+    <div class="card-desc">Blader door alle Pokémon, zoek op naam of nummer, bekijk stats, types en evolutieketens.</div>
+    <span class="card-tag">Web App</span>
+    <span class="arrow">&#x2192;</span>
+  </a>
+
+  <a class="card trivia" href="trivia.html">
+    <span class="card-icon">&#x2605;</span>
+    <div class="card-title">Star Wars Trivia</div>
+    <div class="card-desc">Test je kennis over het Star Wars universum in drie moeilijkheidsgraden: Padawan, Jedi Knight of Jedi Master.</div>
+    <span class="card-tag">Trivia Game</span>
+    <span class="arrow">&#x2192;</span>
+  </a>
+
+  <a class="card eredivisie" href="eredivisie.html">
+    <span class="card-icon">&#x26BD;</span>
+    <div class="card-title">Eredivisie 2024/25</div>
+    <div class="card-desc">Bekijk de actuele stand, doelpuntenstatistieken en recente uitslagen van de Nederlandse Eredivisie.</div>
+    <span class="card-tag">Voetbal</span>
+    <span class="arrow">&#x2192;</span>
+  </a>
+
 </div>
 
-<div id="statusBar"></div>
+<footer>3 projecten &nbsp;·&nbsp; Claude Code</footer>
 
-<div class="grid-wrapper">
-  <div class="grid" id="pokemonGrid"></div>
-  <div class="pagination">
-    <button class="btn" id="prevBtn">&#x2190; Prev</button>
-    <span id="pageInfo">Loading...</span>
-    <button class="btn" id="nextBtn">Next &#x2192;</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalOverlay" style="display:none">
-  <div class="modal" id="modalBox">
-    <button class="modal-close" id="modalClose" title="Close (Esc)">&#x2715;</button>
-    <div id="modalContent"></div>
-  </div>
-</div>
-
-<script>
-/* ─────────────────────────────────────────────────────────────────────────────
-   Constants & helpers
-───────────────────────────────────────────────────────────────────────────── */
-const TYPE_COLORS = {
-  normal:'#9099A1', fire:'#FF6B35', water:'#4A90D9', electric:'#EAC117',
-  grass:'#5DB85D', ice:'#5EC8C4', fighting:'#CE4265', poison:'#9A6FC4',
-  ground:'#D4A843', flying:'#7B9CF4', psychic:'#F95887', bug:'#91C12F',
-  rock:'#C9BB6E', ghost:'#556AAE', dragon:'#5A6FC4', dark:'#595761',
-  steel:'#5A8EA1', fairy:'#EF70A0'
-};
-
-function statColor(v) {
-  if (v >= 130) return '#4dff91';
-  if (v >= 100) return '#80dd44';
-  if (v >=  70) return '#f0c040';
-  if (v >=  45) return '#ff9933';
-  return '#ff5555';
-}
-
-function spriteUrl(id) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-}
-
-function pad(id) { return '#' + String(id).padStart(3, '0'); }
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   API cache
-───────────────────────────────────────────────────────────────────────────── */
-const _cache = new Map();
-
-async function api(url) {
-  if (_cache.has(url)) return _cache.get(url);
-  const p = fetch(url).then(r => {
-    if (!r.ok) throw new Error(`HTTP ${r.status} – ${url}`);
-    return r.json();
-  });
-  _cache.set(url, p);
-  return p;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   State
-───────────────────────────────────────────────────────────────────────────── */
-let allPokemon    = [];      // [{id, name}]
-let basePokemonIds = null;   // Set<number> once loaded
-let filteredList  = [];
-let currentPage   = 0;
-let activeIdx     = 0;
-let filterMode    = 'all';
-let searchTerm    = '';
-let loadingBase   = false;
-
-const COLS = 3, ROWS = 3, PAGE = COLS * ROWS;
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Init
-───────────────────────────────────────────────────────────────────────────── */
-async function init() {
-  renderSkeletons();
-  try {
-    const data = await api('https://pokeapi.co/api/v2/pokemon?limit=10000');
-    allPokemon = data.results.map(p => {
-      const id = +p.url.split('/').slice(-2, -1)[0];
-      return { id, name: p.name };
-    });
-    applyFilters();
-  } catch (e) {
-    document.getElementById('pokemonGrid').innerHTML =
-      `<div class="empty-state">&#x26A0; Failed to load Pokémon list.<br><small>${e.message}</small></div>`;
-  }
-}
-
-function renderSkeletons() {
-  document.getElementById('pokemonGrid').innerHTML =
-    Array(PAGE).fill(`
-      <div class="skeleton-card">
-        <div class="skel-circle"></div>
-        <div class="skel-line" style="width:55%"></div>
-      </div>`).join('');
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Filters & rendering
-───────────────────────────────────────────────────────────────────────────── */
-function applyFilters() {
-  let list = allPokemon;
-
-  if (searchTerm) {
-    const t = searchTerm;
-    list = list.filter(p =>
-      p.name.includes(t) || String(p.id).startsWith(t.replace('#', ''))
-    );
-  }
-
-  if (filterMode === 'base' && basePokemonIds) {
-    list = list.filter(p => basePokemonIds.has(p.id));
-  }
-
-  filteredList = list;
-  currentPage  = 0;
-  activeIdx    = 0;
-  renderGrid();
-}
-
-function renderGrid() {
-  const grid  = document.getElementById('pokemonGrid');
-  const start = currentPage * PAGE;
-  const slice = filteredList.slice(start, start + PAGE);
-
-  if (filteredList.length === 0) {
-    grid.innerHTML = `<div class="empty-state">No Pokémon found.</div>`;
-    updatePagination();
-    return;
-  }
-
-  const showBadges = filterMode === 'all' && basePokemonIds !== null;
-
-  grid.innerHTML = slice.map((p, i) => {
-    const isBase   = basePokemonIds?.has(p.id);
-    const isActive = i === activeIdx;
-    return `
-      <div class="card${isActive ? ' active' : ''}" data-i="${i}" onclick="openModal(${p.id})">
-        ${showBadges && isBase ? '<span class="base-star" title="Base Pokémon">&#x2605;</span>' : ''}
-        <div class="poke-num">${pad(p.id)}</div>
-        <img src="${spriteUrl(p.id)}" alt="${p.name}" loading="lazy"
-             onerror="this.style.opacity='0.15'">
-        <div class="poke-name">${p.name.replace(/-/g,' ')}</div>
-      </div>`;
-  }).join('');
-
-  updatePagination();
-}
-
-function updatePagination() {
-  const total = filteredList.length;
-  const pages = Math.max(1, Math.ceil(total / PAGE));
-  document.getElementById('pageInfo').textContent =
-    `Page ${currentPage + 1} / ${pages}  ·  ${total} Pokémon`;
-  document.getElementById('prevBtn').disabled = currentPage === 0;
-  document.getElementById('nextBtn').disabled = currentPage >= pages - 1;
-}
-
-function gotoPage(p) {
-  const max = Math.max(0, Math.ceil(filteredList.length / PAGE) - 1);
-  currentPage = Math.max(0, Math.min(p, max));
-  activeIdx   = 0;
-  renderGrid();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Keyboard navigation
-───────────────────────────────────────────────────────────────────────────── */
-document.addEventListener('keydown', e => {
-  const overlayOpen = document.getElementById('modalOverlay').style.display !== 'none';
-
-  if (overlayOpen) {
-    if (e.key === 'Escape') closeModal();
-    return;
-  }
-
-  if (document.activeElement === document.getElementById('searchInput')) return;
-
-  const start = currentPage * PAGE;
-  const count = Math.min(PAGE, filteredList.length - start);
-  if (count === 0) return;
-
-  let ni = activeIdx;
-  switch (e.key) {
-    case 'ArrowRight': ni = Math.min(ni + 1, count - 1); break;
-    case 'ArrowLeft':  ni = Math.max(ni - 1, 0);         break;
-    case 'ArrowDown':  ni = Math.min(ni + COLS, count - 1); break;
-    case 'ArrowUp':    ni = Math.max(ni - COLS, 0);      break;
-    case 'Enter': {
-      const pk = filteredList[start + activeIdx];
-      if (pk) openModal(pk.id);
-      return;
-    }
-    case 'PageDown': e.preventDefault(); gotoPage(currentPage + 1); return;
-    case 'PageUp':   e.preventDefault(); gotoPage(currentPage - 1); return;
-    default: return;
-  }
-
-  e.preventDefault();
-  if (ni !== activeIdx) {
-    document.querySelector(`.card[data-i="${activeIdx}"]`)?.classList.remove('active');
-    activeIdx = ni;
-    const next = document.querySelector(`.card[data-i="${activeIdx}"]`);
-    next?.classList.add('active');
-    next?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
-});
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Base Pokémon loader
-───────────────────────────────────────────────────────────────────────────── */
-async function loadBasePokemon() {
-  if (basePokemonIds !== null || loadingBase) return;
-  loadingBase = true;
-
-  const select  = document.getElementById('filterSelect');
-  const grid    = document.getElementById('pokemonGrid');
-  select.disabled = true;
-
-  const ids   = allPokemon.map(p => p.id).filter(id => id >= 1 && id <= 1025);
-  const total = ids.length;
-  basePokemonIds = new Set();
-
-  let done = 0;
-  const BATCH = 80;
-
-  function progressHTML() {
-    const pct = Math.round(done / total * 100);
-    return `
-      <div class="empty-state" style="grid-column:1/-1">
-        Loading base Pokémon data…<br>
-        <small style="font-size:0.75rem">${done} / ${total}</small>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" style="width:${pct}%"></div>
-        </div>
-      </div>`;
-  }
-
-  grid.innerHTML = progressHTML();
-
-  for (let i = 0; i < ids.length; i += BATCH) {
-    const batch = ids.slice(i, i + BATCH);
-    await Promise.all(batch.map(async id => {
-      try {
-        const s = await api(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
-        if (!s.evolves_from_species) basePokemonIds.add(id);
-      } catch { /* skip alternate forms with no species entry */ }
-      done++;
-    }));
-    grid.innerHTML = progressHTML();
-  }
-
-  loadingBase     = false;
-  select.disabled = false;
-
-  const sb = document.getElementById('statusBar');
-  sb.textContent = `Found ${basePokemonIds.size} base Pokémon (starred ★ in All view).`;
-  setTimeout(() => { sb.textContent = ''; }, 4000);
-
-  applyFilters();
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Evolution chain parser  →  [[stage0 mons], [stage1 mons], …]
-───────────────────────────────────────────────────────────────────────────── */
-function parseEvoChain(chain) {
-  const stages = [];
-  function walk(node, depth) {
-    if (!stages[depth]) stages[depth] = [];
-    const id = +node.species.url.split('/').slice(-2, -1)[0];
-    stages[depth].push({ id, name: node.species.name });
-    for (const nx of node.evolves_to) walk(nx, depth + 1);
-  }
-  walk(chain, 0);
-  return stages;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Modal
-───────────────────────────────────────────────────────────────────────────── */
-let currentModalId = null;
-
-async function openModal(id) {
-  currentModalId = id;
-  const overlay = document.getElementById('modalOverlay');
-  const content = document.getElementById('modalContent');
-  overlay.style.display = 'flex';
-  content.innerHTML = `<div class="modal-loading">Loading…</div>`;
-
-  try {
-    const pokemon = await api(`https://pokeapi.co/api/v2/pokemon/${id}`);
-    const species = await api(pokemon.species.url);
-
-    if (currentModalId !== id) return; // user opened a different one
-
-    /* Flavor text */
-    const desc = (species.flavor_text_entries.find(e => e.language.name === 'en')
-      ?.flavor_text || '').replace(/[\f\n\r­]/g, ' ');
-
-    /* Art */
-    const art = pokemon.sprites?.other?.['official-artwork']?.front_default
-      || spriteUrl(id);
-
-    /* Types */
-    const typesHTML = pokemon.types.map(t =>
-      `<span class="type-badge" style="background:${TYPE_COLORS[t.type.name] || '#888'}">${t.type.name}</span>`
-    ).join('');
-
-    /* Stats */
-    const STAT_NAMES = {
-      hp:'HP', attack:'Attack', defense:'Defense',
-      'special-attack':'Sp. Atk', 'special-defense':'Sp. Def', speed:'Speed'
-    };
-    const statsHTML = pokemon.stats.map(s => {
-      const pct = Math.min(100, s.base_stat / 255 * 100);
-      return `
-        <div class="stat-row">
-          <span class="stat-name">${STAT_NAMES[s.stat.name] || s.stat.name}</span>
-          <span class="stat-val">${s.base_stat}</span>
-          <div class="stat-bar-bg">
-            <div class="stat-bar-fill"
-                 style="width:${pct}%;background:${statColor(s.base_stat)}"></div>
-          </div>
-        </div>`;
-    }).join('');
-
-    /* Abilities */
-    const abilitiesHTML = pokemon.abilities.map(a =>
-      `<span style="text-transform:capitalize">${a.ability.name.replace(/-/g,' ')}</span>`
-      + (a.is_hidden ? ' <em style="color:var(--muted);font-size:0.72rem">(hidden)</em>' : '')
-    ).join(', ');
-
-    /* Status line */
-    const isBase = !species.evolves_from_species;
-    const statusLine = isBase
-      ? '&#x2726; Base Pokémon'
-      : `Evolves from <strong style="text-transform:capitalize">${species.evolves_from_species.name.replace(/-/g,' ')}</strong>`;
-
-    /* Evolution chain */
-    let evoHTML = '';
-    if (species.evolution_chain?.url) {
-      try {
-        const evoData = await api(species.evolution_chain.url);
-        const stages  = parseEvoChain(evoData.chain);
-        if (stages.length > 1) {
-          evoHTML = `
-            <div class="section-title">Evolution Chain</div>
-            <div class="evo-chain-wrap">
-              ${stages.map((stage, si) => `
-                ${si > 0 ? '<span class="evo-arrow">&#x2192;</span>' : ''}
-                <div class="evo-group">
-                  ${stage.map(p => `
-                    <div class="evo-card${p.id === id ? ' current-poke' : ''}"
-                         onclick="closeAndOpen(${p.id})"
-                         title="${pad(p.id)} ${p.name}">
-                      <img src="${spriteUrl(p.id)}" alt="${p.name}"
-                           onerror="this.style.opacity='0.2'">
-                      <span>${p.name.replace(/-/g,' ')}</span>
-                    </div>`).join('')}
-                </div>`).join('')}
-            </div>`;
-        }
-      } catch { /* evo chain fetch failed – skip silently */ }
-    }
-
-    /* Generation */
-    const gen = species.generation?.name?.replace('generation-','Gen ').toUpperCase() || '';
-
-    content.innerHTML = `
-      <div class="modal-header">
-        <img class="modal-img" src="${art}" alt="${pokemon.name}"
-             onerror="this.src='${spriteUrl(id)}'">
-        <div class="modal-num">${pad(id)} &nbsp; ${gen}</div>
-        <h2>${pokemon.name.replace(/-/g,' ')}</h2>
-        <div class="type-badges">${typesHTML}</div>
-        <p class="description">${desc}</p>
-      </div>
-
-      <div class="info-grid">
-        <div class="info-item">
-          <label>Height</label>
-          <span>${(pokemon.height / 10).toFixed(1)} m</span>
-        </div>
-        <div class="info-item">
-          <label>Weight</label>
-          <span>${(pokemon.weight / 10).toFixed(1)} kg</span>
-        </div>
-        <div class="info-item" style="grid-column:1/-1">
-          <label>Abilities</label>
-          <span style="text-transform:none">${abilitiesHTML}</span>
-        </div>
-        <div class="info-item" style="grid-column:1/-1">
-          <label>Status</label>
-          <span style="text-transform:none">${statusLine}</span>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="section-title">Base Stats</div>
-        ${statsHTML}
-      </div>
-
-      ${evoHTML}`;
-  } catch (err) {
-    if (currentModalId !== id) return;
-    content.innerHTML =
-      `<div class="empty-state">&#x26A0; Failed to load data.<br><small>${err.message}</small></div>`;
-  }
-}
-
-async function closeAndOpen(id) {
-  closeModal();
-  await new Promise(r => setTimeout(r, 60));
-  openModal(id);
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').style.display = 'none';
-  currentModalId = null;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Events
-───────────────────────────────────────────────────────────────────────────── */
-document.getElementById('searchInput').addEventListener('input', e => {
-  searchTerm = e.target.value.trim().toLowerCase();
-  applyFilters();
-});
-
-document.getElementById('filterSelect').addEventListener('change', async e => {
-  filterMode = e.target.value;
-  if (filterMode === 'base' && basePokemonIds === null) {
-    await loadBasePokemon();
-  } else {
-    applyFilters();
-  }
-});
-
-document.getElementById('prevBtn').addEventListener('click', () => gotoPage(currentPage - 1));
-document.getElementById('nextBtn').addEventListener('click', () => gotoPage(currentPage + 1));
-document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-});
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Go
-───────────────────────────────────────────────────────────────────────────── */
-init();
-</script>
 </body>
 </html>
